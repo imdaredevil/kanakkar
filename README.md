@@ -13,10 +13,10 @@ Flutter
 
 ## To build the app 
 
-'''
+```
 flutter pub get
 flutter clean
 flutter build apk --split-per-abi
-'''
+```
 
 You will have your apk in build/app/outputs/flutter-apk
