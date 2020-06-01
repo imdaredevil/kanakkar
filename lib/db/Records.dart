@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:kanakkar/db/Templates.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:kanakkar/constants.dart';
@@ -22,6 +23,24 @@ class TransactionRecord {
     type = t;
   }
 
+
+  TransactionRecord.fromTemplate(Template template)
+  {
+      if(template.reason.isEmpty)
+      reason = template.name;
+      else
+      reason = template.reason;
+      amount = template.amount;
+      type = template.type;
+      category = template.category;
+      print(this);
+  }
+
+  setDate(DateTime d)
+  {
+      date = d;
+  }
+
   TransactionRecord.fromMap(Map<String,dynamic> map)
   {
       id = map["id"];
@@ -42,9 +61,9 @@ class TransactionRecord {
     return {
       'id': id,
       'reason': reason,
-      'day' : date.day,
-      'month' : date.month,
-      'year' : date.year,
+      'day' : (date == null) ? 0 : date.day,
+      'month' : (date == null) ? 0 : date.month,
+      'year' : (date == null) ? 0 : date.year,
       'category' : category,
       'amount' : amount,
       'type' : type
@@ -112,9 +131,12 @@ class TransactionRecordHome{
     
     join(await getDatabasesPath(), 'doggie_database.db'),
     
-    onCreate: (db, version) {
+    onCreate: (db, version) async {
+      await db.execute(
+        "CREATE TABLE transactionrecord (id INTEGER PRIMARY KEY, amount REAL, reason STRING,day INT,month INT,year INT, category INTEGER, type INTEGER)"
+      );
       return db.execute(
-        "CREATE TABLE transactionrecord (id INTEGER PRIMARY KEY, amount REAL, reason STRING,day INT,month INT,year INT, category INTEGER, type INTEGER)",
+                "CREATE TABLE template (id INTEGER PRIMARY KEY, amount REAL, reason STRING,name STRING, category INTEGER, type INTEGER)",
       );
     },
     // Set the version. This executes the onCreate function and provides a

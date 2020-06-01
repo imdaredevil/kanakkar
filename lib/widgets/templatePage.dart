@@ -1,10 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:kanakkar/constants.dart';
 import 'package:kanakkar/db/Records.dart';
+import 'package:kanakkar/keys.dart';
 import 'package:kanakkar/widgets/loadingWidget.dart';
-import 'package:kanakkar/widgets/recordsList.dart';
 import 'package:kanakkar/db/Templates.dart';
 import 'package:swipe_gesture_recognizer/swipe_gesture_recognizer.dart';
+import 'package:kanakkar/widgets/bottomButton.dart';
+
+class AddTemplateButton extends WideButtonWidget {
+
+  AddTemplateButton(Key k) : super(k);
+
+  createState() => AddTemplateButtonState();
+}
+
+class AddTemplateButtonState extends WideButtonWidgetState {
+
+    AddTemplateButtonState(){
+      message = "ADD TEMPLATE";
+    }
+
+      ontap(BuildContext context){
+
+        allTemplatesPageKey.currentState.enableLoader();
+        Navigator.pushNamed(
+
+              context,
+              RouteConstants.TEMPLATE,
+              arguments: {
+                "mode": FormMode.ADD
+              }
+        ).then((value){
+          allTemplatesPageKey.currentState.updateTemplates();
+          allTemplatesPageKey.currentState.disableLoader();
+          
+        });
+      }
+}
+
+
+
 
 class AllTemplatesPage extends StatefulWidget {
 
@@ -23,10 +58,10 @@ class AllTemplatesPageState extends State<AllTemplatesPage>
     int mode = 0;
     String message;
     List<Template> templates;
-    GlobalKey<RecordsWidgetState> recordsKey = new GlobalKey<RecordsWidgetState>(); 
-
+    GlobalKey<WideButtonWidgetState> addTemplateButtonKey = new GlobalKey<WideButtonWidgetState>();
 
     void initState(){
+      templates = new List<Template>();
       updateTemplates();
       message = null;
       super.initState();
@@ -56,9 +91,68 @@ class AllTemplatesPageState extends State<AllTemplatesPage>
     
   }
 
+  loadEditTemplate(template){
+    enableLoader();
+            Navigator.pushNamed(context,
+            RouteConstants.TEMPLATE,
+            arguments: {
+              "mode" : FormMode.EDIT,
+              "template" : template
+            }
+            ).then((value){
+              updateTemplates();
+              disableLoader();
+            });
+  }
+
+
+  useTemplate(template){
+    enableLoader();
+            Navigator.pushNamed(
+          context, 
+          RouteConstants.RECORD,
+          arguments: {
+            "mode" : FormMode.ADD,
+            "transactionRecord" : new TransactionRecord.fromTemplate(template),
+          }
+            ).then((content){
+              disableLoader();
+            });
+  }
+
+  quickAddTemplate(template){
+     enableLoader();
+              if(template.amount == null || template.category == null || template.type == null)
+              {
+                    Navigator.pushNamed(
+          context, 
+          RouteConstants.RECORD,
+          arguments: {
+            "mode" : FormMode.EDIT,
+            "transactionRecord" : TransactionRecord.fromTemplate(template),
+          }
+            ).then((content){
+              disableLoader();
+            });
+            return;
+              }
+              TransactionRecord transactionRecord = TransactionRecord.fromTemplate(template);
+              transactionRecord.setDate(getToday());
+              print(transactionRecord);
+              transactionRecordHome.addRecord(transactionRecord).then((value){
+                  basicAppPageKey.currentState.updateData();
+                  Navigator.pushNamed(context,RouteConstants.HOME).then((value){
+                      disableLoader();
+                  });
+              });
+  }
+
+  
+
     Widget _buildrow(Template template){
-        return SwipeGestureRecognizer(
-          child: GestureDetector(
+        return  GestureDetector(
+            child: 
+            SwipeGestureRecognizer(
             child: Row(
               children: [
                 Container(
@@ -67,12 +161,12 @@ class AllTemplatesPageState extends State<AllTemplatesPage>
             child : Text(" ",
             ),
             decoration : BoxDecoration(
-                color: categories[template.category]["color"],
+                color: categories[template.category ?? 0]["color"],
                 shape: BoxShape.circle
             )
           ),
           Expanded(
-            child: Container(child: Text(message ?? template.reason ?? template.category,
+            child: Container(child: Text(template.name,
             style: TextStyle(
               fontSize: 16,
             ),
@@ -80,45 +174,31 @@ class AllTemplatesPageState extends State<AllTemplatesPage>
             padding: const EdgeInsets.fromLTRB(16, 4, 0, 4),
             )
           ),
-          Icon(Icons.add,color : Colors.black)  
-              ],),
-          onLongPress: () {
-              message = "Tap to use. Swipe Right to quick add. Swipe left to edit the template";
+          IconButton(
+          tooltip: "use this template to create a new record",
+          icon: Icon(Icons.add,color : Colors.black),
+          onPressed: () {
+            useTemplate(template);
           },
-          onLongPressEnd: (details) => (message = null),
-          onTap: (){
-            enableLoader();
-            Navigator.pushNamed(
-          context, 
-          RouteConstants.RECORD,
-          arguments: {
-            "mode" : FormMode.EDIT,
-            "transactionRecord" : template,
-          }
-            ).then((content){
-              disableLoader();
-            });
+          ),
+          IconButton(
+          tooltip: "edit template",
+          icon: Icon(Icons.edit,color : Colors.black),
+          onPressed: () {
+            loadEditTemplate(template);
           }
           ),
-          onSwipeRight: () {
-              enableLoader();
-              if(template.amount == null || template.category == null || template.type == null)
-              {
-                    Navigator.pushNamed(
-          context, 
-          RouteConstants.RECORD,
-          arguments: {
-            "mode" : FormMode.EDIT,
-            "transactionRecord" : template,
-          }
-            ).then((content){
-              disableLoader();
-            });
-            return;
-              }
-
-          },
-        );
+          IconButton(
+          tooltip: "quick add for today",
+          icon: Icon(Icons.playlist_add,color : Colors.black),
+          onPressed: () {
+            quickAddTemplate(template);
+          } 
+          ) 
+              ],),
+          onSwipeLeft: () => quickAddTemplate(template),
+          ),
+          );
     } 
 
     Widget buildWidget(BuildContext context)
@@ -132,7 +212,7 @@ class AllTemplatesPageState extends State<AllTemplatesPage>
               ),
               backgroundColor: Color(0xff0099cc),
               title : Center(
-                    child: Text("All Records",
+                    child: Text("All Templates",
                     style: TextStyle(color : ColorConstants.primaryContentColor,
                     fontWeight: FontWeight.bold)),
                   )
@@ -149,7 +229,8 @@ class AllTemplatesPageState extends State<AllTemplatesPage>
               );
             }, 
             itemCount: templates.length)
-          )
+          ),
+          AddTemplateButton(addTemplateButtonKey)
           ],
         );
     }

@@ -7,6 +7,7 @@ class RecordType
 }
 
  var categories = [ 
+  {"name" : "Miscellaneous", "color" : Colors.black},
   {"name" : "Fuel","color" : Colors.orange },
   {"name" : "Salary", "color" : Colors.green},
   {"name" : "Recharge", "color" : Colors.blue},
@@ -16,8 +17,7 @@ class RecordType
   {"name" : "Grocery", "color" : Colors.grey},
   {"name" : "clothing and accessories" , "color" : Colors.pink},
   {"name" : "Taxes and Bills" , "color" : Colors.deepPurple},
-  {"name" : "Miscellaneous", "color" : Colors.black}
-
+  
 
 ];
 
@@ -48,9 +48,11 @@ class PaddingConstants
 class RouteConstants
 {
   static const String HOME = "/";
-  static const String  ALL_RECORDS = "/ADD_RECORDS";
+  static const String  ALL_RECORDS = "/ALL_RECORDS";
   static const String RECORD = "/RECORD"; 
   static const String INIT = "/INIT";
+  static const String TEMPLATE = "/TEMPLATE";
+  static const String ALL_TEMPLATES  = "/ALL_TEMPLATES";
 }
 
 
@@ -107,4 +109,5 @@ class FormMode {
     static const DESCRIPTION = "Description";
     static const AMOUNT = "Amount";
     static const CATEGORY = "Category";
+    static const NAME = "Name";
  }

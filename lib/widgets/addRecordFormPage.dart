@@ -8,6 +8,27 @@ import 'package:kanakkar/widgets/bottomButton.dart';
 import 'package:kanakkar/keys.dart';
 
 
+class TemplateButton extends WideButtonWidget {
+
+  TemplateButton(Key k) : super(k);
+  
+  createState() => new TemplateButtonState();
+
+}
+
+class TemplateButtonState extends WideButtonWidgetState {
+
+    TemplateButtonState(){
+      message = "TEMPLATES"; 
+    }
+    ontap(BuildContext context){
+
+        addRecordFormPageKey.currentState.enableLoader();
+        Navigator.pushNamed(context,RouteConstants.ALL_TEMPLATES).then((value) => addRecordFormPageKey.currentState.disableLoader());
+    }
+
+}
+
 class DeleteButton extends WideButtonWidget {
 
   DeleteButton(Key k) : super(k);
@@ -26,8 +47,7 @@ class DeleteButtonState extends WideButtonWidgetState {
         addRecordFormPageKey.currentState.enableLoader();
         transactionRecordHome.deleteRecord(addRecordFormPageKey.currentState.addRecordKey.currentState.transactionRecordId).then(
             (value){
-                
-                Navigator.pop(context);
+                Navigator.pop(context,true);
             }
         );
     }
@@ -60,9 +80,11 @@ class AddButtonState extends WideButtonWidgetState {
         DateTime date = DateTime(int.parse(datePair[2]),int.parse(datePair[1]),int.parse(datePair[0]));
         int category = addRecordFormPageKey.currentState.addRecordKey.currentState.currentCategory;
         int type = addRecordFormPageKey.currentState.addRecordKey.currentState.currentType;
+        if(reason.isEmpty)
+            reason = categories[category]["name"];
         transactionRecordHome.addRecord(new TransactionRecord(amount,reason,date,category,type)).then(
             (value){
-                  Navigator.pop(context);
+                  Navigator.pop(context,true);
             }
         );
     }
@@ -96,11 +118,13 @@ class UpdateButtonState extends WideButtonWidgetState {
         int category = addRecordFormPageKey.currentState.addRecordKey.currentState.currentCategory;
         int type = addRecordFormPageKey.currentState.addRecordKey.currentState.currentType;
         int id = addRecordFormPageKey.currentState.addRecordKey.currentState.transactionRecordId;
+        if(reason.isEmpty)
+            reason = categories[category]["name"];
         TransactionRecord temp = new TransactionRecord(amount,reason,date,category,type);
         temp.setId(id);
         transactionRecordHome.updateRecord(temp).then(
             (value){
-                  Navigator.pop(context);
+                  Navigator.pop(context,true);
                   
             }
         );
@@ -125,6 +149,7 @@ class AddRecordFormPageState extends State<AddRecordFormPage> {
   GlobalKey<AddRecordFormWidgetState> addRecordKey = new GlobalKey<AddRecordFormWidgetState>();
   GlobalKey<WideButtonWidgetState> wideButtonKey = new GlobalKey<WideButtonWidgetState>();
   GlobalKey<WideButtonWidgetState> deleteButtonKey = new GlobalKey<WideButtonWidgetState>();
+  GlobalKey<WideButtonWidgetState> templateButtonKey = new GlobalKey<WideButtonWidgetState>();
   int mode = 0;
 
    enableLoader(){
@@ -166,17 +191,22 @@ class AddRecordFormPageState extends State<AddRecordFormPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+        AppBar(
+              iconTheme: IconThemeData(
+                color: ColorConstants.primaryContentColor
+              ),
+              backgroundColor: Color(0xff0099cc),
+              title : Center(
+                    child: Text( "Record",
+                    style: TextStyle(color : ColorConstants.primaryContentColor,
+                    fontWeight: FontWeight.bold)),
+                  )
+            ),
         Expanded(
-          flex: 3,
-          child: TotalExpenseWidget(totalKey),
-        ),
-        Expanded(
-          flex: 5,
-          child: (mode == FormMode.ADD) ?  AddRecordFormWidget(addRecordKey) :
-          Column(
+          child : Column(
             children: [
               Expanded(child: AddRecordFormWidget(addRecordKey),),
-              DeleteButton(deleteButtonKey)
+              (mode == FormMode.EDIT) ? DeleteButton(deleteButtonKey) : TemplateButton(templateButtonKey)
             ],)
           ),
           (mode == FormMode.EDIT) ? UpdateButton(wideButtonKey) : AddButton(wideButtonKey)

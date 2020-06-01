@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:kanakkar/constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 
 class Template {
 
   int id;
+  String name;
   double amount;
   String reason;
   int category;
   int type;
 
-  Template(double a,String r,int c,int t){
+  Template(String n,double a,String r,int c,int t){
+    name = n;
     amount = a;
     reason = r;
     category = c;
@@ -27,6 +27,7 @@ class Template {
     category = map["category"];
     type = map["type"];
     amount = map["amount"];
+    name = map["name"];
   } 
   
 
@@ -41,7 +42,8 @@ class Template {
       'reason': reason,
       'category' : category,
       'amount' : amount,
-      'type' : type
+      'type' : type,
+      'name' : name,
     };
   }
 
@@ -58,29 +60,18 @@ class TemplateHome{
 
 
 
-  Future<bool> checkForExisting() async{
-    final prefs = await SharedPreferences.getInstance();
-
-    return prefs.containsKey(SHARED_PREF_INIT);
-
-  } 
-
-  Future<bool> setInit(value) async {
-
-      final prefs  = await SharedPreferences.getInstance();
-      return prefs.setDouble(SHARED_PREF_INIT, value);
-
-  }
-
   Future<Database> get _database async {
 
         return openDatabase(
     
     join(await getDatabasesPath(), 'doggie_database.db'),
     
-    onCreate: (db, version) {
+    onCreate: (db, version) async {
+      await db.execute(
+        "CREATE TABLE transactionrecord (id INTEGER PRIMARY KEY, amount REAL, reason STRING,day INT,month INT,year INT, category INTEGER, type INTEGER)"
+      );
       return db.execute(
-        "CREATE TABLE template (id INTEGER PRIMARY KEY, amount REAL, reason STRING,day INT,month INT,year INT, category INTEGER, type INTEGER)",
+                "CREATE TABLE template (id INTEGER PRIMARY KEY, amount REAL, reason STRING,name STRING, category INTEGER, type INTEGER)",
       );
     },
     // Set the version. This executes the onCreate function and provides a

@@ -1,33 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:kanakkar/constants.dart';
-import 'package:kanakkar/db/Records.dart';
-import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
-import 'package:intl/intl.dart';
+import 'package:kanakkar/db/Templates.dart';
 
 
-class AddRecordFormWidget extends StatefulWidget {
+class AddTemplateFormWidget extends StatefulWidget {
   
 
-  AddRecordFormWidget(Key k) : super(key : k);
+  AddTemplateFormWidget(Key k) : super(key : k);
 
    @override
   State<StatefulWidget> createState() {
-    return AddRecordFormWidgetState();
+    return AddTemplateFormWidgetState();
   }
 }
 
-class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
+class AddTemplateFormWidgetState extends State<AddTemplateFormWidget> {
 
-  TextEditingController amountController,descController,dateController;
-  int currentCategory,currentType = RecordType.EXPENSE["value"],transactionRecordId;
+  TextEditingController amountController,descController,nameController;
+  int currentCategory,currentType = RecordType.EXPENSE["value"],templateId;
   GlobalKey<FormState> formKey = new GlobalKey<FormState>(); 
   bool changed = true;
-  DateTime curDate;
 
-  AddRecordFormWidgetState(){
+  AddTemplateFormWidgetState(){
     amountController = new TextEditingController();
     descController = new TextEditingController();
-    dateController = new TextEditingController();
+    nameController = new TextEditingController();
 
   }
 
@@ -35,32 +32,19 @@ class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
   void dispose(){
         amountController.dispose();
         descController.dispose();
-        dateController.dispose();
+        nameController.dispose();
         super.dispose();
   }
 
-  setValues(TransactionRecord transactionRecord)
+  setValues(Template template)
   {
-    transactionRecordId = transactionRecord.id;
-    if(transactionRecord.amount != null)
-      amountController.text = transactionRecord.amount.toString();
-    if(transactionRecord.reason != null)
-      descController.text = transactionRecord.reason;
-    if(transactionRecord.date != null)
-    {
-      dateController.text = dateToStringForUI(transactionRecord.date);
-      curDate = transactionRecord.date;
-    }
+    templateId = template.id;
+      amountController.text = template.amount.toString();
+      descController.text = template.reason;
+      nameController.text = template.name;
       setState(() {
-        if(transactionRecord.category != null)
-        currentCategory = transactionRecord.category;
-        if(transactionRecord.type != null)
-        currentType = transactionRecord.type;
-        if(transactionRecord.date != null)
-    {
-      dateController.text = dateToStringForUI(transactionRecord.date);
-      curDate = transactionRecord.date;
-    }
+        currentCategory = template.category;
+        currentType = template.type;
       });
   }
 
@@ -68,9 +52,9 @@ class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
   Widget build(BuildContext context) {
 
      Map<String,dynamic> arguments =   ModalRoute.of(context).settings.arguments;
-                   if(arguments.containsKey("transactionRecord") && changed)
+                   if(arguments.containsKey("template") && changed)
                    {
-                      setValues(arguments["transactionRecord"]);
+                      setValues(arguments["template"]);
                       changed = false;
                    }
                   
@@ -87,6 +71,8 @@ class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value){
+                  if(value == "")
+                  return null;
                   if(double.tryParse(value) == null)
                     return "Enter valid amount";
                   double val = double.parse(value);
@@ -124,44 +110,34 @@ class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
               ),
               TextFormField(
                 decoration: InputDecoration(
-                  hintText: FormHints.DESCRIPTION + "You can leave it as blank if you want",
+                  hintText: FormHints.DESCRIPTION + " to add more details. It Can be left blank",
                   contentPadding: const EdgeInsets.all(16.0),
                 ),
                 validator: (value){
-                  
                   if(value.length > 1000)
                       return "Make your description shorter";
                   return null;
                 },
                 controller: descController,
               ),
-              DateTimeField(
-                format: DateFormat("dd/MM/yyyy"),
-                initialValue: curDate ?? null,
-                onShowPicker: (context, currentValue) {
-                        return showDatePicker(context: context, 
-                        initialDate: currentValue ?? DateTime.now(), 
-                        firstDate: DateTime(1900,1,1),
-                        lastDate: DateTime.now());
-                },
+              TextFormField(
                 decoration: InputDecoration(
-                  hintText: "Date",
+                  hintText: FormHints.NAME,
                   contentPadding: const EdgeInsets.all(16.0),
                 ),
-                keyboardType: TextInputType.datetime,
-                controller: dateController,
-                validator: (value) {
-                  if(value == null)
-                    return "Choose a date";
-                    return null;
+                validator: (value){
+                  if(value.isEmpty)
+                    return "Enter some name so that you can identfiy your template";
+                  if(value.length > 1000)
+                      return "Make your name shorter";
+                  return null;
                 },
+                controller: nameController,
               ),
               DropdownButtonFormField(
                 value: currentCategory ?? null,
                 validator: (value) {
-                  if(value == null)
-                  return "choose some category";
-                  return null;
+                 return null;
                 },
                 decoration: InputDecoration(
                     hintText: FormHints.CATEGORY,

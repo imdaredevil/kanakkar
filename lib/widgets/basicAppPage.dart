@@ -32,7 +32,11 @@ class AddRecordButtonState extends WideButtonWidgetState {
               arguments: {
                 "mode": FormMode.ADD
               }
-        ).then((value)=>basicAppPageKey.currentState.disableLoader());
+        ).then((value){
+          print(value);
+          basicAppPageKey.currentState.updateData();
+          basicAppPageKey.currentState.disableLoader();
+        });
       }
 }
 
@@ -51,9 +55,24 @@ class BasicAppState extends State<BasicApp> {
   GlobalKey<WideButtonWidgetState> wideButtonKey = new GlobalKey<WideButtonWidgetState>();
   int mode = 0;
 
+
+  initState()
+  {
+      updateData();
+      super.initState();
+  }
+
   loadAllRecords(){
     enableLoader();
     Navigator.pushNamed(context, RouteConstants.ALL_RECORDS).then((value){
+          updateData();
+          disableLoader();
+    });
+  }
+
+  loadAllTemplates(){
+    enableLoader();
+    Navigator.pushNamed(context, RouteConstants.ALL_TEMPLATES).then((value){
           updateData();
           disableLoader();
     });
@@ -63,6 +82,7 @@ class BasicAppState extends State<BasicApp> {
   Widget buildWidget(){
     return SwipeGestureRecognizer(
       onSwipeLeft: () => loadAllRecords(),
+      onSwipeRight: () => loadAllTemplates(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -75,24 +95,41 @@ class BasicAppState extends State<BasicApp> {
           child:
           Column(
             children: [
-            GestureDetector(
+            Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
               child: Container(
               padding: const EdgeInsets.fromLTRB( 0, 8.0, 0,0),
               child: Row(
                 children: [
-                  Expanded(
-                  child: Text("All Records   ", 
-                  textAlign: TextAlign.right,
+                  Icon(Icons.arrow_back,
+                        color: ColorConstants.primaryColor),
+                  Text("  All Templates", 
+                  textAlign: TextAlign.left,
                   style: TextStyle(color: ColorConstants.primaryColor, fontSize: 18, fontWeight: FontWeight.bold)
                 )
-                  ),
+                ])),
+              onTap: (){
+                loadAllTemplates();
+              },),
+              GestureDetector(
+              child: Container(
+              padding: const EdgeInsets.fromLTRB( 0, 8.0, 0,0),
+              child: Row(
+                children: [
+                  Text("All Records   ", 
+                  textAlign: TextAlign.right,
+                  style: TextStyle(color: ColorConstants.primaryColor, fontSize: 18, fontWeight: FontWeight.bold)
+                ),
                 Icon(Icons.arrow_forward,
                         color: ColorConstants.primaryColor)
                 ])),
               onTap: (){
                 loadAllRecords();
               },)
-              ,
+              ]
+            ) ,
             Expanded(
               child: RecordsWidget(recentRecordKey)
             )
@@ -128,7 +165,6 @@ class BasicAppState extends State<BasicApp> {
   @override
   Widget build(BuildContext context) {
 
-      updateData();
       return (mode == 0) ? buildWidget() : 
       Stack(
         children : [
