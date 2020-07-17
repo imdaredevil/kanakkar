@@ -57,15 +57,16 @@ class AllRecordsPageState extends State<AllRecordsPage>
                   curYear = year;
                   transactionRecordHome.readRecordsByMonth(month,year).then((value){
                      List<TransactionRecord> allValues = new List<TransactionRecord>();
-                     value.forEach((key, value) {
-                        allValues.addAll(value);
+                     value.forEach((key, recordAndSources) {
+                       for(var recordSource in recordAndSources)
+                          allValues.add(recordSource["transactionRecord"]);
                      });
                      List<double> values = transactionRecordHome.getConsolidated(allValues);
                      setState((){
                         curIncome = values[0];
                         curExpense = values[1];
                      });
-                      
+
                     recordsKey.currentState.updateRecords(value);
                     disableLoader();
                   });

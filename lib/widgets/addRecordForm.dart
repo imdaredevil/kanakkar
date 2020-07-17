@@ -3,6 +3,7 @@ import 'package:kanakkar/constants.dart';
 import 'package:kanakkar/db/Records.dart';
 import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:intl/intl.dart';
+import 'package:kanakkar/db/Sources.dart';
 
 
 class AddRecordFormWidget extends StatefulWidget {
@@ -20,15 +21,24 @@ class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
 
   TextEditingController amountController,descController,dateController;
   int currentCategory,currentType = RecordType.EXPENSE["value"],transactionRecordId;
+  int currentSource = 1;
   GlobalKey<FormState> formKey = new GlobalKey<FormState>(); 
   bool changed = true;
   DateTime curDate;
+  List<Source> sources;
 
   AddRecordFormWidgetState(){
     amountController = new TextEditingController();
     descController = new TextEditingController();
     dateController = new TextEditingController();
+    sources = new List<Source>();
+  }
 
+ updateSources(currSources) {
+     setState(() {
+        sources = currSources;
+     });
+   
   }
 
   @override
@@ -56,6 +66,8 @@ class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
         currentCategory = transactionRecord.category;
         if(transactionRecord.type != null)
         currentType = transactionRecord.type;
+        if(transactionRecord.sourceId != null)
+          currentSource = transactionRecord.sourceId;
         if(transactionRecord.date != null)
     {
       dateController.text = dateToStringForUI(transactionRecord.date);
@@ -73,7 +85,7 @@ class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
                       setValues(arguments["transactionRecord"]);
                       changed = false;
                    }
-                  
+              
 
     return Form(
           key : formKey,
@@ -90,7 +102,7 @@ class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
                   if(double.tryParse(value) == null)
                     return "Enter valid amount";
                   double val = double.parse(value);
-                  if(val > 1e6)
+                  if(val > 1e8)
                     return "we cannot handle these many zeros";
                   return null;
                 },
@@ -117,9 +129,7 @@ class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
                     );
                 }).toList(), 
                 onChanged: (value) {
-                  setState((){
                       currentType = value;
-                  });
                 },
               ),
               TextFormField(
@@ -188,9 +198,27 @@ class AddRecordFormWidgetState extends State<AddRecordFormWidget> {
                       );
                 }).toList(),
                 onChanged: (value) {
-                  setState((){
-                      currentCategory = value; 
-                  });
+                 currentCategory = value;
+                }
+                ),
+          DropdownButtonFormField(
+                value: currentSource ?? 1,
+                validator: (value) {
+                  if(value == null)
+                  return "choose the account";
+                  return null;
+                },
+                decoration: InputDecoration(
+                    hintText: "Enter account",
+                    contentPadding: const EdgeInsets.all(16.0),
+                ),
+                items: sources.map((source){
+                      return DropdownMenuItem(
+                          value: source.id,
+                          child: Text(source.name) );
+                }).toList(),
+                onChanged: (value) {
+                      currentSource = value; 
                 }
                 )
             ],

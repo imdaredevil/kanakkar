@@ -17,15 +17,15 @@ class RecordsWidget extends StatefulWidget {
 
 class RecordsWidgetState extends State<RecordsWidget> {
   
-  Map<DateTime,List<TransactionRecord> > records = new Map<DateTime,List<TransactionRecord> >();
+  Map<DateTime,List<Map<String,dynamic>>> records = new Map<DateTime,List<Map<String,dynamic>>>();
   
-  void updateRecords(Map<DateTime,List<TransactionRecord> > currRecords){
+  void updateRecords(Map<DateTime,List<Map<String,dynamic>>> currRecords){
     setState(() {
           records = currRecords;
   });
 }
  
-  Widget _buildRecord(TransactionRecord currRecord){
+  Widget _buildRecord(Map<String,dynamic> currRecord){
 
     return GestureDetector( 
     onTap: (){
@@ -38,11 +38,10 @@ class RecordsWidgetState extends State<RecordsWidget> {
           RouteConstants.RECORD,
           arguments: {
             "mode" : FormMode.EDIT,
-            "transactionRecord" : currRecord,
+            "transactionRecord" : currRecord["transactionRecord"],
           }
           ).then((value){
-                print("returned");
-              if(ModalRoute.of(context).settings.name == RouteConstants.HOME)
+                if(ModalRoute.of(context).settings.name == RouteConstants.HOME)
               {
                   basicAppPageKey.currentState.updateData();
                   basicAppPageKey.currentState.disableLoader();
@@ -58,6 +57,7 @@ class RecordsWidgetState extends State<RecordsWidget> {
     child: Container(
       padding: PaddingConstants.PRIMARY_PADDING,
       child: Row(  
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
           Container(
             width: 10,
@@ -65,23 +65,34 @@ class RecordsWidgetState extends State<RecordsWidget> {
             child : Text(" ",
             ),
             decoration : BoxDecoration(
-                color: categories[currRecord.category]["color"],
+                color: categories[currRecord["transactionRecord"].category]["color"],
                 shape: BoxShape.circle
             )
           ),
           Expanded(
-            child: Container(child: Text(currRecord.reason,
+            child: Container(
+              child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [Text(currRecord["transactionRecord"].reason,
             style: TextStyle(
               fontSize: 16,
             ),
             ),
+            Container(
+              padding: EdgeInsets.fromLTRB(0,3.0,0,0),
+            child: Text(currRecord["source"].name.toString().toUpperCase(),
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey 
+            )))
+            ]),
             padding: const EdgeInsets.fromLTRB(16, 4, 0, 4),
             )
           ),
           Text(
-            ((currRecord.type == RecordType.INCOME["value"]) ? "+" : "-") + currRecord.amount.toString(),
+            ((currRecord["transactionRecord"].type == RecordType.INCOME["value"]) ? "+" : "-") + currRecord["transactionRecord"].amount.toString(),
             style: TextStyle(
-              color:  ((currRecord.type == RecordType.INCOME["value"]) ? ColorConstants.incomeColor : ColorConstants.expenseColor),
+              color:  ((currRecord["transactionRecord"].type == RecordType.INCOME["value"]) ? ColorConstants.incomeColor : ColorConstants.expenseColor),
               fontWeight: FontWeight.bold,
               fontSize: 16
               ),
@@ -93,14 +104,15 @@ class RecordsWidgetState extends State<RecordsWidget> {
 
   }
 
-  Widget _buildDate(DateTime date,List<TransactionRecord> currRecords){
+  Widget _buildDate(DateTime date,List<Map<String,dynamic>> currRecords){
 
     // return Text("testing");
-
-    var consolidated = records.map((key,value){
-        return MapEntry(key,transactionRecordHome.getConsolidated(value));
-    });
-
+    List<TransactionRecord> recordList = new List<TransactionRecord>();
+    for(var recordAndSource in currRecords)
+    {
+        recordList.add(recordAndSource["transactionRecord"]);
+    }
+    var consolidated = transactionRecordHome.getConsolidated(recordList);
       return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -127,7 +139,7 @@ class RecordsWidgetState extends State<RecordsWidget> {
                 children: [ 
                   Expanded(
                     child : Text(
-                  consolidated[date][0] == 0 ? "0.00" : "+" + consolidated[date][0].toString(),
+                  consolidated[0] == 0 ? "0.00" : "+" + consolidated[0].toString(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color : ColorConstants.incomeColor,
@@ -137,7 +149,7 @@ class RecordsWidgetState extends State<RecordsWidget> {
                 )),
                 Expanded(              
                 child: Text(
-                  consolidated[date][1] == 0 ? "0.00" : " -" + consolidated[date][1].toString(),
+                  consolidated[1] == 0 ? "0.00" : " -" + consolidated[1].toString(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color : ColorConstants.expenseColor,

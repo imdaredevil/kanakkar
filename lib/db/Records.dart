@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:kanakkar/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kanakkar/db/Sources.dart';
 
 
 class TransactionRecord {
@@ -14,13 +15,15 @@ class TransactionRecord {
   DateTime date;
   int category;
   int type;
+  int sourceId;
 
-  TransactionRecord(double a,String r,DateTime d,int c,int t){
+  TransactionRecord(double a,String r,DateTime d,int c,int t,int s){
     amount = a;
     reason = r;
     date = DateTime(d.year,d.month,d.day);
     category = c;
     type = t;
+    sourceId = s;
   }
 
 
@@ -33,7 +36,7 @@ class TransactionRecord {
       amount = template.amount;
       type = template.type;
       category = template.category;
-      print(this);
+      sourceId = template.sourceId;
   }
 
   setDate(DateTime d)
@@ -49,6 +52,7 @@ class TransactionRecord {
     type = map["type"];
     amount = map["amount"];
     date = DateTime(map["year"],map["month"],map["day"]);
+    sourceId = map["sourceId"];
   } 
   
 
@@ -66,7 +70,8 @@ class TransactionRecord {
       'year' : (date == null) ? 0 : date.year,
       'category' : category,
       'amount' : amount,
-      'type' : type
+      'type' : type,
+      'sourceId' : sourceId 
     };
   }
 
@@ -92,38 +97,52 @@ class TransactionRecordHome{
 
   Future<bool> setInit(value) async {
 
-      final prefs  = await SharedPreferences.getInstance();
-      return prefs.setDouble(SHARED_PREF_INIT, value);
+        final prefs  = await SharedPreferences.getInstance();
+        prefs.setBool(SHARED_PREF_INIT,true);
 
+        await sourceHome.initCash(value);
+        return Future.value(true);
   }
 
-  Future<bool> setTotal() async
+  Future<List<Map<String,dynamic>>> getTotal() async
   {
-      final prefs = await SharedPreferences.getInstance();
       
       final Database db = await _database;
-      var result = (await db.query("transactionrecord",
-      columns : ["SUM(amount)","type"],
-      groupBy : "type"));
-      double current = 0;
+      var sources = (await db.query("source",where: "DELETED = 0",orderBy: "id"));
+      List<Map<String,dynamic>> resultt = new List<Map<String,dynamic>>();
+      for(var sourceMap in sources)
+      {
+          var source = Source.fromMap(sourceMap);
+          resultt.add({
+            "source" : source,
+            "remainingAmount" : source.amount
+          });
+      }
+      var result = (await db.query("transactionrecord"));
       for(var record in result)
       {
-          if(record["type"] == RecordType.INCOME["value"])
-              current += record["SUM(amount)"];
-          else  
-              current -= record["SUM(amount)"];
+          for(var sourceMap in resultt)
+          {
+              if(sourceMap["source"].id == record["sourceId"])
+            {
+                  if(record["type"] == RecordType.INCOME["value"])
+                  {
+                      sourceMap["remainingAmount"] += record["amount"];
+                  }
+                  else  
+                  {
+                     sourceMap["remainingAmount"]  -= record["amount"];
+                  }
+                  break;
+            }
+          }
       }
-      if(prefs.containsKey(SHARED_PREF_INIT))
-        current += prefs.getDouble(SHARED_PREF_INIT);
-      return prefs.setDouble(SHARED_PREF_AMOUNT,current);
+
+      return resultt;
+      
   }
 
-  Future<double> getTotal() async
-  {
-      await setTotal();
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getDouble(SHARED_PREF_AMOUNT);
-  }
+  
 
     Future<Database> get _database async {
 
@@ -133,10 +152,13 @@ class TransactionRecordHome{
     
     onCreate: (db, version) async {
       await db.execute(
-        "CREATE TABLE transactionrecord (id INTEGER PRIMARY KEY, amount REAL, reason STRING,day INT,month INT,year INT, category INTEGER, type INTEGER)"
+        "CREATE TABLE transactionrecord (id INTEGER PRIMARY KEY, amount REAL, reason STRING,day INT,month INT,year INT, category INTEGER, type INTEGER,sourceId INTEGER)"
+      );
+      await db.execute(
+        "CREATE TABLE source (id INTEGER PRIMARY KEY, name STRING, deleted INT, amount REAL)"
       );
       return db.execute(
-                "CREATE TABLE template (id INTEGER PRIMARY KEY, amount REAL, reason STRING,name STRING, category INTEGER, type INTEGER)",
+                "CREATE TABLE template (id INTEGER PRIMARY KEY, amount REAL, reason STRING,name STRING, category INTEGER, type INTEGER,sourceId INTEGER)",
       );
     },
     // Set the version. This executes the onCreate function and provides a
@@ -150,7 +172,6 @@ class TransactionRecordHome{
   Future<int> addRecord(TransactionRecord transactionRecord) async
   {
        final Database db = await _database;
-      
       int count = (await db.rawQuery("SELECT COUNT(id) AS count FROM transactionrecord"))[0]["count"];
 
       transactionRecord.setId(count + 1);
@@ -159,53 +180,69 @@ class TransactionRecordHome{
         transactionRecord.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace, 
         );
-      await setTotal();
       return Future.value(1);
   }
   
-  Future<Map<DateTime,List<TransactionRecord>>> readRecordsByMonth(int month,int year) async {
+  Future<Map<DateTime,List<Map<String,dynamic>>>> readRecordsByMonth(int month,int year) async {
     
     final Database db = await _database;
     List<Map<String,dynamic> > result = (await db.query("transactionrecord", 
     where : "month = " + month.toString() + " AND " + "year = " + year.toString(),
     orderBy: "day"
     ));
-    Map<DateTime,List<TransactionRecord> > resultt = new Map<DateTime,List<TransactionRecord> >();
+    Map<DateTime,List<Map<String,dynamic>> > resultt = new Map<DateTime,List<Map<String,dynamic>> >();
     for(Map<String,dynamic> curr in result)
     {
         TransactionRecord transactionRecord = TransactionRecord.fromMap(curr);
         DateTime curday = transactionRecord.date;
+        Source curSource = (await sourceHome.readSourceById(transactionRecord.sourceId));
         if(resultt.containsKey(curday))
         {
-            resultt[curday].add(transactionRecord);
+            resultt[curday].add(
+              {
+                "transactionRecord" : transactionRecord,
+                "source" : curSource
+              });
         }
         else
         {
-            List<TransactionRecord> current = new List<TransactionRecord>();
-            current.add(transactionRecord);
+            List<Map<String,dynamic>> current = new List<Map<String,dynamic>>();
+            current.add({
+                "transactionRecord" : transactionRecord,
+                "source" : curSource
+              });
             resultt.putIfAbsent(curday, () => current);
         }
     }
     return resultt;
   }
 
-  Future<Map<DateTime,List<TransactionRecord>>> getRecentRecords() async  {
+  Future<Map<DateTime,List<Map<String,dynamic>>>> getRecentRecords() async  {
 
       final Database db = await _database;
       
-      Map<DateTime,List<TransactionRecord>> result = new Map<DateTime,List<TransactionRecord>>();
+      Map<DateTime,List<Map<String,dynamic>>> result = new Map<DateTime,List<Map<String,dynamic>>>();
       List<Map<String,dynamic>> queryres = (await db.query("transactionrecord",
           orderBy: "year,month,day DESC",
           limit: 10));
           for(Map<String,dynamic> element in queryres)
           {
             TransactionRecord currentRecord = new TransactionRecord.fromMap(element);
+             Source curSource = (await sourceHome.readSourceById(currentRecord.sourceId));
             if(result.containsKey(currentRecord.date))
-              result[currentRecord.date].add(currentRecord);
+              result[currentRecord.date].add(
+                  {
+                "transactionRecord" : currentRecord,
+                "source" : curSource
+              }
+              );
             else
               result.putIfAbsent(currentRecord.date, (){
-                  List<TransactionRecord> currentList = new List<TransactionRecord>();
-                  currentList.add(currentRecord);
+                  List<Map<String,dynamic>> currentList = new List<Map<String,dynamic>>();
+                  currentList.add({
+                "transactionRecord" : currentRecord,
+                "source" : curSource
+              });
                   return currentList;
               });
       }
@@ -221,7 +258,6 @@ class TransactionRecordHome{
         transactionRecord.toMap(),
         where: "id = " + transactionRecord.id.toString()
         );
-      await setTotal();
       return Future.value(1);
   }
 
@@ -233,7 +269,6 @@ class TransactionRecordHome{
         'transactionrecord',
         where: "id = " + transactionRecordid.toString()
         );
-      await setTotal();
       return Future.value(1);
   }
 

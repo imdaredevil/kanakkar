@@ -6,7 +6,7 @@ import 'package:kanakkar/widgets/totalExpense.dart';
 import 'package:kanakkar/widgets/addRecordForm.dart';
 import 'package:kanakkar/widgets/bottomButton.dart';
 import 'package:kanakkar/keys.dart';
-
+import 'package:kanakkar/db/Sources.dart';
 
 class TemplateButton extends WideButtonWidget {
 
@@ -28,6 +28,7 @@ class TemplateButtonState extends WideButtonWidgetState {
     }
 
 }
+
 
 class DeleteButton extends WideButtonWidget {
 
@@ -80,9 +81,10 @@ class AddButtonState extends WideButtonWidgetState {
         DateTime date = DateTime(int.parse(datePair[2]),int.parse(datePair[1]),int.parse(datePair[0]));
         int category = addRecordFormPageKey.currentState.addRecordKey.currentState.currentCategory;
         int type = addRecordFormPageKey.currentState.addRecordKey.currentState.currentType;
+        int sourceId = addRecordFormPageKey.currentState.addRecordKey.currentState.currentSource;
         if(reason.isEmpty)
             reason = categories[category]["name"];
-        transactionRecordHome.addRecord(new TransactionRecord(amount,reason,date,category,type)).then(
+        transactionRecordHome.addRecord(new TransactionRecord(amount,reason,date,category,type,sourceId)).then(
             (value){
                   Navigator.pop(context,true);
             }
@@ -117,10 +119,11 @@ class UpdateButtonState extends WideButtonWidgetState {
         DateTime date = DateTime(int.parse(datePair[2]),int.parse(datePair[1]),int.parse(datePair[0]));
         int category = addRecordFormPageKey.currentState.addRecordKey.currentState.currentCategory;
         int type = addRecordFormPageKey.currentState.addRecordKey.currentState.currentType;
+        int sourceId = addRecordFormPageKey.currentState.addRecordKey.currentState.currentSource;
         int id = addRecordFormPageKey.currentState.addRecordKey.currentState.transactionRecordId;
         if(reason.isEmpty)
             reason = categories[category]["name"];
-        TransactionRecord temp = new TransactionRecord(amount,reason,date,category,type);
+        TransactionRecord temp = new TransactionRecord(amount,reason,date,category,type,sourceId);
         temp.setId(id);
         transactionRecordHome.updateRecord(temp).then(
             (value){
@@ -187,7 +190,10 @@ class AddRecordFormPageState extends State<AddRecordFormPage> {
 
         final Map<String,dynamic> arguments = ModalRoute.of(context).settings.arguments;
         int mode = arguments["mode"];
-        
+
+        sourceHome.readLiveSources().then((currSources){        
+            addRecordKey.currentState.updateSources(currSources);
+        });
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

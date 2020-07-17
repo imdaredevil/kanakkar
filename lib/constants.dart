@@ -53,6 +53,7 @@ class RouteConstants
   static const String INIT = "/INIT";
   static const String TEMPLATE = "/TEMPLATE";
   static const String ALL_TEMPLATES  = "/ALL_TEMPLATES";
+  static const String SOURCE = "/SOURCE";
 }
 
 

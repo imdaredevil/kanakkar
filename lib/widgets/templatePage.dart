@@ -138,7 +138,6 @@ class AllTemplatesPageState extends State<AllTemplatesPage>
               }
               TransactionRecord transactionRecord = TransactionRecord.fromTemplate(template);
               transactionRecord.setDate(getToday());
-              print(transactionRecord);
               transactionRecordHome.addRecord(transactionRecord).then((value){
                   basicAppPageKey.currentState.updateData();
                   Navigator.pushNamed(context,RouteConstants.HOME).then((value){

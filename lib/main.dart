@@ -7,6 +7,7 @@ import 'package:kanakkar/keys.dart';
 import 'package:kanakkar/widgets/regPage.dart';
 import 'package:kanakkar/widgets/addTemplateFormPage.dart';
 import 'package:kanakkar/widgets/templatePage.dart';
+import 'package:kanakkar/widgets/addSourceFormPage.dart';
 
 void main() {
   
@@ -54,6 +55,10 @@ class MyApp extends StatelessWidget {
         RouteConstants.RECORD : (context){
           addRecordFormPageKey = new GlobalKey<AddRecordFormPageState>();
           return Scaffold(body : AddRecordFormPage(addRecordFormPageKey));
+        },
+         RouteConstants.SOURCE : (context){
+          addSourceFormPageKey = new GlobalKey<AddSourceFormPageState>();
+          return Scaffold(body : AddSourceFormPage(addSourceFormPageKey));
         },
         RouteConstants.INIT : (context){
           registerPageKey = new GlobalKey<RegisterPageState>();

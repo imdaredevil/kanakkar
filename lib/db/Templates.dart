@@ -11,13 +11,15 @@ class Template {
   String reason;
   int category;
   int type;
+  int sourceId;
 
-  Template(String n,double a,String r,int c,int t){
+  Template(String n,double a,String r,int c,int t,int s){
     name = n;
     amount = a;
     reason = r;
     category = c;
     type = t;
+    sourceId = s;
   }
 
   Template.fromMap(Map<String,dynamic> map)
@@ -28,6 +30,7 @@ class Template {
     type = map["type"];
     amount = map["amount"];
     name = map["name"];
+    sourceId = map["sourceId"];
   } 
   
 
@@ -42,6 +45,7 @@ class Template {
       'reason': reason,
       'category' : category,
       'amount' : amount,
+      'sourceId' : sourceId,
       'type' : type,
       'name' : name,
     };
@@ -68,10 +72,13 @@ class TemplateHome{
     
     onCreate: (db, version) async {
       await db.execute(
-        "CREATE TABLE transactionrecord (id INTEGER PRIMARY KEY, amount REAL, reason STRING,day INT,month INT,year INT, category INTEGER, type INTEGER)"
+        "CREATE TABLE transactionrecord (id INTEGER PRIMARY KEY, amount REAL, reason STRING,day INT,month INT,year INT, category INTEGER, type INTEGER,sourceId INTEGER)"
+      );
+      await db.execute(
+        "CREATE TABLE source (id INTEGER PRIMARY KEY, name STRING, deleted INT, amount REAL,sourceId INTEGER)"
       );
       return db.execute(
-                "CREATE TABLE template (id INTEGER PRIMARY KEY, amount REAL, reason STRING,name STRING, category INTEGER, type INTEGER)",
+                "CREATE TABLE template (id INTEGER PRIMARY KEY, amount REAL, reason STRING,name STRING, category INTEGER, type INTEGER,sourceId INTEGER)",
       );
     },
     // Set the version. This executes the onCreate function and provides a

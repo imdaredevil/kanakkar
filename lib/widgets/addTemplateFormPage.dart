@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kanakkar/constants.dart';
+import 'package:kanakkar/db/Sources.dart';
 import 'package:kanakkar/db/Templates.dart';
 import 'package:kanakkar/widgets/loadingWidget.dart';
 import 'package:kanakkar/widgets/totalExpense.dart';
@@ -59,7 +60,8 @@ class AddButtonState extends WideButtonWidgetState {
         String name = addTemplateFormPageKey.currentState.addTemplateKey.currentState.nameController.text;
         int category = addTemplateFormPageKey.currentState.addTemplateKey.currentState.currentCategory;
         int type = addTemplateFormPageKey.currentState.addTemplateKey.currentState.currentType;
-        templateHome.addRecord(new Template(name,amount,reason,category,type)).then(
+        int sourceId = addTemplateFormPageKey.currentState.addTemplateKey.currentState.currentSource;
+        templateHome.addRecord(new Template(name,amount,reason,category,type,sourceId)).then(
             (value){
                   Navigator.pop(context,true);
             }
@@ -93,8 +95,9 @@ class UpdateButtonState extends WideButtonWidgetState {
         String name = addTemplateFormPageKey.currentState.addTemplateKey.currentState.nameController.text;
         int category = addTemplateFormPageKey.currentState.addTemplateKey.currentState.currentCategory;
         int type = addTemplateFormPageKey.currentState.addTemplateKey.currentState.currentType;
+        int sourceId = addTemplateFormPageKey.currentState.addTemplateKey.currentState.currentSource;
         int id = addTemplateFormPageKey.currentState.addTemplateKey.currentState.templateId;
-        Template temp = new Template(name,amount,reason,category,type);
+        Template temp = new Template(name,amount,reason,category,type,sourceId);
         temp.setId(id);
         templateHome.updateRecord(temp).then(
             (value){
@@ -158,9 +161,14 @@ class AddTemplateFormPageState extends State<AddTemplateFormPage> {
 
   Widget buildWidget(BuildContext context){
 
+
         final Map<String,dynamic> arguments = ModalRoute.of(context).settings.arguments;
         int mode = arguments["mode"];
         
+         sourceHome.readLiveSources().then((currSources){        
+            addTemplateKey.currentState.updateSources(currSources);
+        });
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

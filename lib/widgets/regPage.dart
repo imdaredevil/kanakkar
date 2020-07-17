@@ -87,7 +87,7 @@ class RegisterPageState extends State<RegisterPage> {
                  child : TextFormField(
                     textAlign: TextAlign.center,
                 decoration: InputDecoration(
-                  hintText: "Enter the amount you currently have",
+                  hintText: "Enter the cash amount you currently have",
                   contentPadding: const EdgeInsets.all(16.0),
                 ),
                 keyboardType: TextInputType.number,
@@ -95,7 +95,6 @@ class RegisterPageState extends State<RegisterPage> {
                   if(double.tryParse(value) == null)
                     return "Enter valid amount";
                   double val = double.parse(value);
-                  print(val);
                   if(val >= 10000000)
                     return "we cannot handle these many zeros";
                   return null;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kanakkar/constants.dart';
+import 'package:kanakkar/db/Sources.dart';
 import 'package:kanakkar/db/Templates.dart';
 
 
@@ -20,12 +21,21 @@ class AddTemplateFormWidgetState extends State<AddTemplateFormWidget> {
   int currentCategory,currentType = RecordType.EXPENSE["value"],templateId;
   GlobalKey<FormState> formKey = new GlobalKey<FormState>(); 
   bool changed = true;
+  List<Source> sources;
+   int currentSource = 1;
 
   AddTemplateFormWidgetState(){
     amountController = new TextEditingController();
     descController = new TextEditingController();
     nameController = new TextEditingController();
+    sources = new List<Source>();
+  }
 
+   updateSources(currSources) {
+     setState(() {
+        sources = currSources;
+     });
+   
   }
 
   @override
@@ -45,6 +55,8 @@ class AddTemplateFormWidgetState extends State<AddTemplateFormWidget> {
       setState(() {
         currentCategory = template.category;
         currentType = template.type;
+        if(template.sourceId != null)
+          currentSource = template.sourceId;
       });
   }
 
@@ -76,7 +88,7 @@ class AddTemplateFormWidgetState extends State<AddTemplateFormWidget> {
                   if(double.tryParse(value) == null)
                     return "Enter valid amount";
                   double val = double.parse(value);
-                  if(val > 1e6)
+                  if(val > 1e8)
                     return "we cannot handle these many zeros";
                   return null;
                 },
@@ -167,6 +179,26 @@ class AddTemplateFormWidgetState extends State<AddTemplateFormWidget> {
                   setState((){
                       currentCategory = value; 
                   });
+                }
+                ),
+                DropdownButtonFormField(
+                value: currentSource ?? 1,
+                validator: (value) {
+                  if(value == null)
+                  return "choose the account";
+                  return null;
+                },
+                decoration: InputDecoration(
+                    hintText: FormHints.CATEGORY,
+                    contentPadding: const EdgeInsets.all(16.0),
+                ),
+                items: sources.map((source){
+                      return DropdownMenuItem(
+                          value: source.id,
+                          child: Text(source.name) );
+                }).toList(),
+                onChanged: (value) {
+                      currentSource = value; 
                 }
                 )
             ],

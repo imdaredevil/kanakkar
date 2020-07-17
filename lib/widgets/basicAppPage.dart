@@ -33,7 +33,6 @@ class AddRecordButtonState extends WideButtonWidgetState {
                 "mode": FormMode.ADD
               }
         ).then((value){
-          print(value);
           basicAppPageKey.currentState.updateData();
           basicAppPageKey.currentState.disableLoader();
         });
