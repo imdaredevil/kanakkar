@@ -48,7 +48,7 @@ class TotalExpenseWidgetState extends State<TotalExpenseWidget> {
           pagination: new SwiperPagination(
             builder: new DotSwiperPaginationBuilder(activeColor: Colors.white,color: Color(0xff0077aa))
           ),
-          itemCount: sources.length,
+          itemCount: sources != null ? sources.length : 0,
           itemBuilder: (context,index) {
          return GestureDetector(
            onTap: () {

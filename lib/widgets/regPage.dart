@@ -124,8 +124,8 @@ class RegisterPageState extends State<RegisterPage> {
   }
 
   void initState(){
-    checkForExisting();
     super.initState();
+    checkForExisting();
   }
 
   checkForExisting(){

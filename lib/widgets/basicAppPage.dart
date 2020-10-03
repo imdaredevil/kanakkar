@@ -57,8 +57,8 @@ class BasicAppState extends State<BasicApp> {
 
   initState()
   {
-      updateData();
       super.initState();
+      updateData();
   }
 
   loadAllRecords(){

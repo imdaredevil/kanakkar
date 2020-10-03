@@ -90,7 +90,7 @@ class UpdateButtonState extends WideButtonWidgetState {
         
         Source temp = new Source(name,amount);
         temp.setId(id);
-        sourceHome.updateRecord(new Source(name,amount)).then(
+        sourceHome.updateRecord(temp).then(
             (value){
                   Navigator.pop(context,true);
             }

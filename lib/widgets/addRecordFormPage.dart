@@ -167,6 +167,13 @@ class AddRecordFormPageState extends State<AddRecordFormPage> {
     
   }
 
+  initState() {
+    super.initState();
+     sourceHome.readLiveSources().then((currSources){        
+            addRecordKey.currentState.updateSources(currSources);
+        });
+  }
+
   @override 
   Widget build(BuildContext context){
 
@@ -191,9 +198,7 @@ class AddRecordFormPageState extends State<AddRecordFormPage> {
         final Map<String,dynamic> arguments = ModalRoute.of(context).settings.arguments;
         int mode = arguments["mode"];
 
-        sourceHome.readLiveSources().then((currSources){        
-            addRecordKey.currentState.updateSources(currSources);
-        });
+       
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

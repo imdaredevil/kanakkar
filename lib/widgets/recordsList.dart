@@ -29,9 +29,9 @@ class RecordsWidgetState extends State<RecordsWidget> {
 
     return GestureDetector( 
     onTap: (){
-        if(basicAppPageKey.currentState != null)
+        if(ModalRoute.of(context).settings.name == RouteConstants.HOME)
           basicAppPageKey.currentState.enableLoader();
-        if(allRecordsPageKey.currentState != null)
+        else
           allRecordsPageKey.currentState.enableLoader();  
         Navigator.pushNamed(
           context, 
